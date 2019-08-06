@@ -1,30 +1,26 @@
 package db_sql_benchmark
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/leporo/sqlf"
 )
 
-var (
-	sqlfSqlite3    = sqlf.NewBuilder(sqlf.NoDialect())
-	sqlfPostgreSQL = sqlf.NewBuilder(sqlf.PostgreSQL())
-)
+var s string
 
-func sqlfSelectSimple(b *testing.B, builder *sqlf.Builder) {
+func sqlfSelectSimple(b *testing.B, dialect sqlf.Dialect) {
 	for n := 0; n < b.N; n++ {
-		q := builder.Select("id").
+		q := dialect.Select("id").
 			From("tickets").
 			Where("subdomain_id = ? and (state = ? or state = ?)", 1, "open", "spam")
-		q.Build()
+		s = q.String()
 		q.Close()
 	}
 }
 
-func sqlfSelectConditional(b *testing.B, builder *sqlf.Builder) {
+func sqlfSelectConditional(b *testing.B, dialect sqlf.Dialect) {
 	for n := 0; n < b.N; n++ {
-		q := builder.Select("id").
+		q := dialect.Select("id").
 			From("tickets").
 			Where("subdomain_id = ? and (state = ? or state = ?)", 1, "open", "spam")
 
@@ -36,14 +32,14 @@ func sqlfSelectConditional(b *testing.B, builder *sqlf.Builder) {
 				Offset(8)
 		}
 
-		q.Build()
+		s = q.String()
 		q.Close()
 	}
 }
 
-func sqlfSelectComplex(b *testing.B, builder *sqlf.Builder) {
+func sqlfSelectComplex(b *testing.B, dialect sqlf.Dialect) {
 	for n := 0; n < b.N; n++ {
-		q := builder.Select("DITINCT a, b, z, y, x").
+		q := dialect.Select("DITINCT a, b, z, y, x").
 			// Distinct().
 			From("c").
 			Where("d = ? OR e = ?", 1, "wat").
@@ -61,20 +57,18 @@ func sqlfSelectComplex(b *testing.B, builder *sqlf.Builder) {
 			OrderBy("l").
 			Limit(7).
 			Offset(8)
-		q.Build()
+		s = q.String()
 		q.Close()
 	}
 }
 
-func sqlfSelectSubquery(b *testing.B, builder *sqlf.Builder) {
+func sqlfSelectSubquery(b *testing.B, dialect sqlf.Dialect) {
 	for n := 0; n < b.N; n++ {
-		sq := builder.Select("id").
-			From("tickets").
-			Where("subdomain_id = ? and (state = ? or state = ?)", 1, "open", "spam")
-		subQuery, _ := sq.Build()
-
-		q := builder.Select("DITINCT a, b").
-			Select(fmt.Sprintf("(%s) AS subq", subQuery)).
+		q := dialect.Select("DITINCT a, b").
+			SubQuery("(", ") AS subq",
+				sqlf.Select("id").
+					From("tickets").
+					Where("subdomain_id = ? and (state = ? or state = ?)", 1, "open", "spam")).
 			From("c").
 			// Distinct().
 			// Where(dbr.Eq{"f": 2, "x": "hi"}).
@@ -83,113 +77,109 @@ func sqlfSelectSubquery(b *testing.B, builder *sqlf.Builder) {
 			OrderBy("l").
 			Limit(7).
 			Offset(8)
-		q.Build()
+		s = q.String()
 		q.Close()
-		sq.Close()
 	}
 }
 
 func BenchmarkSqlfSelectSimple(b *testing.B) {
-	sqlfSelectSimple(b, sqlfSqlite3)
+	sqlfSelectSimple(b, sqlf.NoDialect)
 }
 
 func BenchmarkSqlfSelectSimplePostgreSQL(b *testing.B) {
-	sqlfSelectSimple(b, sqlfPostgreSQL)
+	sqlfSelectSimple(b, sqlf.PostgreSQL)
 }
 
 func BenchmarkSqlfSelectConditional(b *testing.B) {
-	sqlfSelectConditional(b, sqlfSqlite3)
+	sqlfSelectConditional(b, sqlf.NoDialect)
 }
 
 func BenchmarkSqlfSelectConditionalPostgreSQL(b *testing.B) {
-	sqlfSelectConditional(b, sqlfPostgreSQL)
+	sqlfSelectConditional(b, sqlf.PostgreSQL)
 }
 
 func BenchmarkSqlfSelectComplex(b *testing.B) {
-	sqlfSelectComplex(b, sqlfSqlite3)
+	sqlfSelectComplex(b, sqlf.NoDialect)
 }
 
 func BenchmarkSqlfSelectComplexPostgreSQL(b *testing.B) {
-	sqlfSelectComplex(b, sqlfPostgreSQL)
+	sqlfSelectComplex(b, sqlf.PostgreSQL)
 }
 
 func BenchmarkSqlfSelectSubquery(b *testing.B) {
-	sqlfSelectSubquery(b, sqlfSqlite3)
+	sqlfSelectSubquery(b, sqlf.NoDialect)
 }
 
 func BenchmarkSqlfSelectSubqueryPostgreSQL(b *testing.B) {
-	sqlfSelectSubquery(b, sqlfPostgreSQL)
+	sqlfSelectSubquery(b, sqlf.PostgreSQL)
 }
 
 //
 // Insert benchmark
 //
-func sqlfInsert(b *testing.B, builder *sqlf.Builder) {
+func sqlfInsert(b *testing.B, dialect sqlf.Dialect) {
 	for n := 0; n < b.N; n++ {
-		q := builder.InsertInto("mytable").
+		q := dialect.InsertInto("mytable").
 			Set("id", 1).
 			Set("a", "test_a").
 			Set("b", "test_b").
 			Set("price", 100.05).
 			Set("created", "2014-01-05").
 			Set("updated", "2015-01-05")
-		q.Build()
+		s = q.String()
 		q.Close()
 	}
 }
 
 func BenchmarkSqlfInsert(b *testing.B) {
-	sqlfInsert(b, sqlfSqlite3)
+	sqlfInsert(b, sqlf.NoDialect)
 }
 
 func BenchmarkSqlfInsertPostgreSQL(b *testing.B) {
-	sqlfInsert(b, sqlfPostgreSQL)
+	sqlfInsert(b, sqlf.PostgreSQL)
 }
 
 //
 // Update benchmark
 //
-func sqlfUpdateSetColumns(b *testing.B, builder *sqlf.Builder) {
-
-	b.ResetTimer()
-
+func sqlfUpdateSetColumns(b *testing.B, dialect sqlf.Dialect) {
 	for n := 0; n < b.N; n++ {
-		q := builder.Update("mytable").
+		q := dialect.Update("mytable").
 			Set("foo", 1).
 			SetExpr("bar", "COALESCE(bar, 0) + 1").
 			Set("c", 2).
 			Where("id = ?", 9).
 			Limit(10)
-		q.Build()
+		s = q.String()
 		q.Close()
 	}
 }
 
 func BenchmarkSqlfUpdateSetColumns(b *testing.B) {
-	sqlfUpdateSetColumns(b, sqlfSqlite3)
+	sqlfUpdateSetColumns(b, sqlf.NoDialect)
 }
 
 func BenchmarkSqlfUpdateSetColumnsPostgreSQL(b *testing.B) {
-	sqlfUpdateSetColumns(b, sqlfPostgreSQL)
+	sqlfUpdateSetColumns(b, sqlf.PostgreSQL)
 }
 
 //
 // Delete benchmark
 //
-func sqlfDelete(b *testing.B, builder *sqlf.Builder) {
+func sqlfDelete(b *testing.B, dialect sqlf.Dialect) {
 	for n := 0; n < b.N; n++ {
-		q := builder.DeleteFrom("test_table").
+		q := dialect.DeleteFrom("test_table").
 			Where("b = ?", 1).
 			Limit(2)
-		q.Build()
+		s = q.String()
 		q.Close()
 	}
 }
 
 func BenchmarkSqlfDelete(b *testing.B) {
-	sqlfDelete(b, sqlfSqlite3)
+	sqlfDelete(b, sqlf.NoDialect)
 }
 
 func BenchmarkSqlfDeletePostgreSQL(b *testing.B) {
-	sqlfDelete(b, sqlfPostgreSQL)
+	sqlfDelete(b, sqlf.PostgreSQL)
 }

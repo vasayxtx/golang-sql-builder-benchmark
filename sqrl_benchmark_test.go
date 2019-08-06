@@ -159,9 +159,7 @@ func BenchmarkSqrlDelete(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		sqrl.Delete("test_table").
 			Where("b = ?", 1).
-			OrderBy("c").
 			Limit(2).
-			Offset(3).
 			ToSql()
 	}
 }

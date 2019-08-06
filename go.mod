@@ -10,7 +10,7 @@ require (
 	github.com/elgris/sqrl v0.0.0-20181124135704-90ecf730640a
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
-	github.com/leporo/sqlf v0.0.0-20190720071558-1e0fb7945ca3
+	github.com/leporo/sqlf v0.0.0-20190806164311-7cac4345b611
 	google.golang.org/appengine v1.6.1 // indirect
 	gopkg.in/doug-martin/goqu.v5 v5.0.0 // indirect
 )

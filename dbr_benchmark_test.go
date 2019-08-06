@@ -13,24 +13,24 @@ import (
 // Select benchmarks
 //
 
-func dbrToSQL(dialect dbr.Dialect, b dbr.Builder) (query string, args []interface{}) {
+func dbrToSQL(b dbr.Builder) (query string, args []interface{}) {
 	// As ToSql method seems to be dropped, we use a trimmed version
 	// of interpolator.encodePlaceholder method dbr calls under the hood.
 	pbuf := dbr.NewBuffer()
-	b.Build(dialect, pbuf)
+	b.Build(dbrDialect.SQLite3, pbuf)
 	return pbuf.String(), pbuf.Value()
 }
 
-func dbrSelectSimple(b *testing.B, dialect dbr.Dialect) {
+func BenchmarkDbrSelectSimple(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		dbrToSQL(dialect, dbr.Select("id").
+		dbrToSQL(dbr.Select("id").
 			From("tickets").
 			Where("subdomain_id = ? and (state = ? or state = ?)", 1, "open", "spam"))
 	}
 }
 
-func dbrSelectConditional(b *testing.B, dialect dbr.Dialect) {
+func BenchmarkDbrSelectConditional(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -46,14 +46,12 @@ func dbrSelectConditional(b *testing.B, dialect dbr.Dialect) {
 				Offset(8)
 		}
 
-		dbrToSQL(dialect, qb)
+		dbrToSQL(qb)
 	}
 }
-func dbrSelectComplex(b *testing.B, dialect dbr.Dialect) {
-
-	b.ResetTimer()
+func BenchmarkDbrSelectComplex(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		dbrToSQL(dialect, dbr.Select("a", "b", "z", "y", "x").
+		dbrToSQL(dbr.Select("a", "b", "z", "y", "x").
 			Distinct().
 			From("c").
 			Where("d = ? OR e = ?", 1, "wat").
@@ -74,15 +72,15 @@ func dbrSelectComplex(b *testing.B, dialect dbr.Dialect) {
 	}
 }
 
-func dbrSelectSubquery(b *testing.B, dialect dbr.Dialect) {
+func BenchmarkDbrSelectSubquery(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		subQuery, _ := dbrToSQL(dialect, dbr.Select("id").
+		subQuery, _ := dbrToSQL(dbr.Select("id").
 			From("tickets").
 			Where("subdomain_id = ? and (state = ? or state = ?)", 1, "open", "spam"))
 
-		dbrToSQL(dialect, dbr.Select("a", "b", fmt.Sprintf("(%s) AS subq", subQuery)).
+		dbrToSQL(dbr.Select("a", "b", fmt.Sprintf("(%s) AS subq", subQuery)).
 			From("c").
 			Distinct().
 			// Where(dbr.Eq{"f": 2, "x": "hi"}).
@@ -94,69 +92,29 @@ func dbrSelectSubquery(b *testing.B, dialect dbr.Dialect) {
 	}
 }
 
-func BenchmarkDbrSelectSimple(b *testing.B) {
-	dbrSelectSimple(b, dbrDialect.SQLite3)
-}
-
-func BenchmarkDbrSelectSimplePostgreSQL(b *testing.B) {
-	dbrSelectSimple(b, dbrDialect.PostgreSQL)
-}
-
-func BenchmarkDbrSelectConditional(b *testing.B) {
-	dbrSelectConditional(b, dbrDialect.SQLite3)
-}
-
-func BenchmarkDbrSelectConditionalPostgreSQL(b *testing.B) {
-	dbrSelectConditional(b, dbrDialect.PostgreSQL)
-}
-
-func BenchmarkDbrSelectComplex(b *testing.B) {
-	dbrSelectComplex(b, dbrDialect.SQLite3)
-}
-
-func BenchmarkDbrSelectComplexPostgreSQL(b *testing.B) {
-	dbrSelectComplex(b, dbrDialect.PostgreSQL)
-}
-
-func BenchmarkDbrSelectSubquery(b *testing.B) {
-	dbrSelectSubquery(b, dbrDialect.SQLite3)
-}
-
-func BenchmarkDbrSelectSubqueryPostgreSQL(b *testing.B) {
-	dbrSelectSubquery(b, dbrDialect.PostgreSQL)
-}
-
 //
 // Insert benchmark
 //
-func dbrInsert(b *testing.B, dialect dbr.Dialect) {
+func BenchmarkDbrInsert(b *testing.B) {
 
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		dbrToSQL(dialect, dbr.InsertInto("mytable").
+		dbrToSQL(dbr.InsertInto("mytable").
 			Columns("id", "a", "b", "price", "created", "updated").
 			Values(1, "test_a", "test_b", 100.05, "2014-01-05", "2015-01-05"))
 	}
 }
 
-func BenchmarkDbrInsert(b *testing.B) {
-	dbrInsert(b, dbrDialect.SQLite3)
-}
-
-func BenchmarkDbrInsertPostgreSQL(b *testing.B) {
-	dbrInsert(b, dbrDialect.PostgreSQL)
-}
-
 //
 // Update benchmark
 //
-func dbrUpdateSetColumns(b *testing.B, dialect dbr.Dialect) {
+func BenchmarkDbrUpdateSetColumns(b *testing.B) {
 
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		dbrToSQL(dialect, dbr.Update("mytable").
+		dbrToSQL(dbr.Update("mytable").
 			Set("foo", 1).
 			Set("bar", dbr.Expr("COALESCE(bar, 0) + 1")).
 			Set("c", 2).
@@ -165,52 +123,28 @@ func dbrUpdateSetColumns(b *testing.B, dialect dbr.Dialect) {
 	}
 }
 
-func dbrUpdateSetMap(b *testing.B, dialect dbr.Dialect) {
+func BenchmarkDbrUpdateSetMap(b *testing.B) {
 
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		dbrToSQL(dialect, dbr.Update("mytable").
+		dbrToSQL(dbr.Update("mytable").
 			SetMap(map[string]interface{}{"b": 1, "c": 2, "bar": dbr.Expr("COALESCE(bar, 0) + 1")}).
 			Where("id = ?", 9).
 			Limit(10))
 	}
 }
 
-func BenchmarkDbrUpdateSetColumns(b *testing.B) {
-	dbrUpdateSetColumns(b, dbrDialect.SQLite3)
-}
-
-func BenchmarkDbrUpdateSetColumnsPostgreSQL(b *testing.B) {
-	dbrUpdateSetColumns(b, dbrDialect.PostgreSQL)
-}
-
-func BenchmarkDbrUpdateSetMap(b *testing.B) {
-	dbrUpdateSetMap(b, dbrDialect.SQLite3)
-}
-
-func BenchmarkDbrUpdateSetMapPostgreSQL(b *testing.B) {
-	dbrUpdateSetMap(b, dbrDialect.SQLite3)
-}
-
 //
 // Delete benchmark
 //
-func dbrDelete(b *testing.B, dialect dbr.Dialect) {
+func BenchmarkDbrDelete(b *testing.B) {
 
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		dbrToSQL(dialect, dbr.DeleteFrom("test_table").
+		dbrToSQL(dbr.DeleteFrom("test_table").
 			Where("b = ?", 1).
 			Limit(2))
 	}
-}
-
-func BenchmarkDbrDelete(b *testing.B) {
-	dbrDelete(b, dbrDialect.SQLite3)
-}
-
-func BenchmarkDbrDeletePostgreSQL(b *testing.B) {
-	dbrDelete(b, dbrDialect.PostgreSQL)
 }
