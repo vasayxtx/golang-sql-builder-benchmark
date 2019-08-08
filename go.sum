@@ -24,8 +24,8 @@ github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 h1:SOEGU9fKiNWd/HOJuq
 github.com/lann/builder v0.0.0-20180802200727-47ae307949d0/go.mod h1:dXGbAdH5GtBTC4WfIxhKZfyBF/HBFgRZSWwZ9g/He9o=
 github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 h1:P6pPBnrTSX3DEVR4fDembhRWSsG5rVo6hYhAB/ADZrk=
 github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0/go.mod h1:vmVJ0l/dxyfGW6FmdpVm2joNMFikkuWg0EoCKLGUMNw=
-github.com/leporo/sqlf v0.0.0-20190806164311-7cac4345b611 h1:9DQePHv0WChW9P0lqsmo16vCtVzRhHuHKFER0p+jYQQ=
-github.com/leporo/sqlf v0.0.0-20190806164311-7cac4345b611/go.mod h1:1/lLjDnUhLGXw9+S1Hm6ZbKXDKPbaywWvYSkHA8bsGA=
+github.com/leporo/sqlf v0.0.0-20190808154559-a3199f8b3777 h1:4xCP1vph93/Gqz2OdxQIMmUH9Y6W6sZ3mu/xjDpxtZc=
+github.com/leporo/sqlf v0.0.0-20190808154559-a3199f8b3777/go.mod h1:1/lLjDnUhLGXw9+S1Hm6ZbKXDKPbaywWvYSkHA8bsGA=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.1.1 h1:sJZmqHoEaY7f+NPP8pgLB/WxulyR3fewgCM2qaSlBb4=
 github.com/lib/pq v1.1.1/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
