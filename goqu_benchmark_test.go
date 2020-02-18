@@ -16,10 +16,7 @@ func init() {
 	driver = db
 }
 
-//
-// Select benchmarks
-//
-func BenchmarkGoquSelectSimple(b *testing.B) {
+func BenchmarkGoquSelectVerySimple(b *testing.B) {
 	db := goqu.New("default", driver)
 	b.ResetTimer()
 
@@ -38,7 +35,7 @@ func BenchmarkGoquSelectSimple(b *testing.B) {
 	}
 }
 
-func BenchmarkGoquSelectSimpleRawWhere(b *testing.B) {
+func BenchmarkGoquSelectVerySimpleRawExp(b *testing.B) {
 	db := goqu.New("default", driver)
 	b.ResetTimer()
 
@@ -46,16 +43,16 @@ func BenchmarkGoquSelectSimpleRawWhere(b *testing.B) {
 		db.From("tickets").
 			Where(goqu.L("subdomain_id = ? and (state = ? or state = ?)", 1, "open", "spam")).
 			ToSQL()
-
 	}
 }
 
-func BenchmarkGoquSelectConditional(b *testing.B) {
+func BenchmarkGoquSelectSimple(b *testing.B) {
 	db := goqu.New("default", driver)
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		qb := db.From("tickets").
+		db.Select("id").
+			From("tickets").
 			Where(
 				goqu.And(
 					goqu.I("subdomain_id").Eq(1),
@@ -64,52 +61,55 @@ func BenchmarkGoquSelectConditional(b *testing.B) {
 						goqu.I("state").Eq("spam"),
 					),
 				),
-			)
-		if n%2 == 0 {
-			qb.GroupBy("subdomain_id").
-				Having(goqu.I("number").Eq(1)).
-				Order(goqu.I("state").Asc()).
-				Limit(7).
-				Offset(8)
-		}
+			).
+			GroupBy("subdomain_id").
+			Having(goqu.I("number").Eq(1)).
+			Order(goqu.I("state").Asc()).
+			Limit(7).
+			Offset(8).
+			ToSQL()
+	}
+}
 
-		qb.ToSQL()
+func BenchmarkGoquSelectSimpleRawExp(b *testing.B) {
+	db := goqu.New("default", driver)
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		db.Select("id").
+			From("tickets").
+			Where(goqu.L("subdomain_id = ? and (state = ? or state = ?)", 1, "open", "spam")).
+			GroupBy("subdomain_id").
+			Having(goqu.L("number = ?", 1)).
+			Order(goqu.I("state").Asc()).
+			Limit(7).
+			Offset(8).
+			ToSQL()
 	}
 }
 
 func BenchmarkGoquSelectComplex(b *testing.B) {
 	db := goqu.New("default", driver)
 	b.ResetTimer()
+
 	for n := 0; n < b.N; n++ {
-		db.From("a", "b", "z", "y").
-			Select(goqu.DISTINCT("x")).
+		db.Select(goqu.DISTINCT("a"), "b", "z", "y", "x").
+			From("c").
 			Where(
-				goqu.Or(
-					goqu.I("d").Eq(1),
-					goqu.I("e").Eq("wat"),
-				)).
-			Where(
-				goqu.And(
-					goqu.I("f").Eq(2),
-					goqu.I("x").Eq("hi"),
-				)).
-			Where(
-				goqu.And(
-					goqu.I("g").Eq(3),
-				)).
-			Where(
-				goqu.And(
-					goqu.I("h").Eq([]int{1, 2, 3}),
-				)).
+				goqu.Or(goqu.I("d").Eq(1), goqu.I("e").Eq("wat")),
+				goqu.I("f").Eq(2),
+				goqu.I("x").Eq("hi"),
+				goqu.I("h").Eq([]int{1, 2, 3}),
+			).
 			GroupBy("i").
 			GroupBy("ii").
 			GroupBy("iii").
-			Having(goqu.I("j = k")).
+			Having(goqu.L("j = k")).
 			Having(goqu.I("jj").Eq(1)).
 			Having(goqu.I("jjj").Eq(2)).
 			Order(goqu.I("l").Asc()).
-			Order(goqu.I("l").Asc()).
-			Order(goqu.I("l").Asc()).
+			Order(goqu.I("ll").Asc()).
+			Order(goqu.I("lll").Asc()).
 			Limit(7).
 			Offset(8).
 			ToSQL()
