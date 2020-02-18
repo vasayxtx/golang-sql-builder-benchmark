@@ -5,14 +5,13 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gocraft/dbr"
-	dbrDialect "github.com/gocraft/dbr/dialect"
+	"github.com/gocraft/dbr/v2"
+	dbrDialect "github.com/gocraft/dbr/v2/dialect"
 )
 
 //
 // Select benchmarks
 //
-
 func dbrToSQL(b dbr.Builder) (query string, args []interface{}) {
 	// As ToSql method seems to be dropped, we use a trimmed version
 	// of interpolator.encodePlaceholder method dbr calls under the hood.
@@ -22,6 +21,18 @@ func dbrToSQL(b dbr.Builder) (query string, args []interface{}) {
 }
 
 func BenchmarkDbrSelectSimple(b *testing.B) {
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		dbrToSQL(dbr.Select("id").
+			From("tickets").
+			Where(
+				dbr.And(
+					dbr.Eq("subdomain_id", 1),
+					dbr.Or(dbr.Eq("state", "open"), dbr.Eq("state", "spam")))))
+	}
+}
+
+func BenchmarkDbrSelectSimpleRawWhere(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		dbrToSQL(dbr.Select("id").

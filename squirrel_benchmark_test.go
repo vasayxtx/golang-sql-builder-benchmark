@@ -10,8 +10,19 @@ import (
 //
 // Select benchmarks
 //
-
 func BenchmarkSquirrelSelectSimple(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		squirrel.Select("id").
+			From("tickets").
+			Where(
+				squirrel.And{
+					squirrel.Eq{"subdomain_id": 1},
+					squirrel.Or{squirrel.Eq{"state": "open"}, squirrel.Eq{"state": "spam"}}}).
+			ToSql()
+	}
+}
+
+func BenchmarkSquirrelSelectSimpleRawWhere(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		squirrel.Select("id").
 			From("tickets").
