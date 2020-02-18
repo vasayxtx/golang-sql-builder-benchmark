@@ -93,3 +93,16 @@ func BenchmarkSquirrelSelectComplex(b *testing.B) {
 			ToSql()
 	}
 }
+
+func BenchmarkSquirrelRealMySQL(b *testing.B) {
+	conn := makeMySQLDriver()
+	var emp Employee
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		sq.Select("first_name", "last_name").
+			From("employees").
+			Where("emp_no = ?", 30000).
+			Limit(1).
+			RunWith(conn).QueryRow().Scan(&emp.FirstName, &emp.LastName)
+	}
+}

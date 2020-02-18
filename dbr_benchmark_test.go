@@ -101,3 +101,31 @@ func BenchmarkDbrSelectComplex(b *testing.B) {
 		dbrToSQL(qb)
 	}
 }
+
+func makeDbrSession() *dbr.Session {
+	conn, _ := dbr.Open("mysql", mysqlDSN, nil)
+	conn.SetMaxOpenConns(10)
+	return conn.NewSession(nil)
+}
+
+func BenchmarkDbrRealMySQL(b *testing.B) {
+	dbSess := makeDbrSession()
+	var emp Employee
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		dbSess.Select("first_name", "last_name").
+			From("employees").
+			Where("emp_no = ?", 30000).
+			Limit(1).
+			LoadOne(&emp)
+	}
+}
+
+func BenchmarkDbrRealMySQLRawSQL(b *testing.B) {
+	dbSess := makeDbrSession()
+	var emp Employee
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		dbSess.SelectBySql("select first_name, last_name from employees where emp_no = ? limit 1", 30000).LoadOne(&emp)
+	}
+}

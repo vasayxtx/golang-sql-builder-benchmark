@@ -11,6 +11,11 @@ A comparison of popular Go SQL query builders.
 
 # Benchmarks
 
+Start MySQL with employees databases in docker:
+```
+$ ./run_mysql_in_docker.sh
+```
+
 Was run on Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz (VirtualBox, 4 CPU).
 
 ```
