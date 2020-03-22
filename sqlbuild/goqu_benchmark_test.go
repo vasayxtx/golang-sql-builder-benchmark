@@ -1,4 +1,4 @@
-package db_sql_benchmark
+package sqlbuild
 
 import (
 	"database/sql"
@@ -114,19 +114,5 @@ func BenchmarkGoquSelectComplex(b *testing.B) {
 			Limit(7).
 			Offset(8).
 			ToSQL()
-	}
-}
-
-func BenchmarkGoquRealMySQL(b *testing.B) {
-	driver := makeMySQLDriver()
-	db := goqu.New("mysql", driver)
-	var emp Employee
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		db.Select("first_name", "last_name").
-			From("employees").
-			Where(goqu.L("emp_no = ?", 30000)).
-			Limit(1).
-			ScanStruct(&emp)
 	}
 }

@@ -1,4 +1,4 @@
-module github.com/elgris/golang-sql-builder-benchmark
+module github.com/vasayxtx/golang-sql-builder-benchmark
 
 go 1.12
 
